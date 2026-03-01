@@ -17,13 +17,14 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
-plugin_version = "0.1.1"
+plugin_version = "0.1.2"
 plugin_author = ["梦涵LOVE"]
 plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
 plugin_minebbs_link = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_license = "AGPL-3.0"
 plugin_copyright = "务必保留原作者信息！"
+plugin_update_url = "https://raw.githubusercontent.com/MengHanLOVE1027/endstone-easycheckupdate/refs/heads/main/update_versions.json"
 
 success_plugin_version = "v" + plugin_version
 plugin_full_name = plugin_name + " " + success_plugin_version
@@ -225,6 +226,7 @@ class EasyCheckUpdatePlugin(Plugin):
     version = plugin_version
     authors = plugin_author
     website = plugin_website
+    update_url = plugin_update_url
 
     # NOTE: 注册命令
     commands = {
