@@ -16,7 +16,7 @@ from .bstats import BStats, SimplePie
 # TAG: 全局常量
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
-plugin_description = "一个简单的插件更新检查器"
+plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
 plugin_version = "0.1.0"
 plugin_author = ["梦涵LOVE"]
 plugin_website = ""
