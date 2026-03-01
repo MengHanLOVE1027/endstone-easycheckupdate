@@ -13,12 +13,10 @@ Powered by EndStone.<br>
 
 [![README](https://img.shields.io/badge/README-中文|Chinese-blue)](README.md) [![README_EN](https://img.shields.io/badge/README-英文|English-blue)](README_EN.md)
 
-[![Github Version](https://img.shields.io/github/v/release/MengHanLOVE1027/endstone-easycheckupdate)](https://github.com/MengHanLOVE1027/endstone-easycheckupdate/releases) [![GitHub License](https://img.shields.io/badge/License-AGPL3.0-blue.svg)](https://opensource.org/licenses/AGPL-3.0) [![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org/) [![Platform](https://img.shields.io/badge/Platform-EndStone-9cf.svg)](https://endstone.io) [![Downloads](https://img.shields.io/github/downloads/MengHanLOVE1027/endstone-easycheckupdate/total.svg)](https://github.com/MengHanLOVE1027/endstone-easycheckupdate/releases)
-
 </div>
 <div align="center">
 
-[![Github Version](https://img.shields.io/github/v/release/MengHanLOVE1027/endstone-easycheckupdate)](https://github.com/MengHanLOVE1027/endstone-easycheckupdate/releases) [![GitHub License](https://img.shields.io/badge/License-AGPL%203.0-blue.svg)](https://opensource.org/licenses/AGPL-3.0) [![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org/) [![Platform](https://img.shields.io/badge/Platform-EndStone-9cf.svg)](https://endstone.io)
+[![Github Version](https://img.shields.io/github/v/release/MengHanLOVE1027/endstone-easycheckupdate)](https://github.com/MengHanLOVE1027/endstone-easycheckupdate/releases) [![GitHub License](https://img.shields.io/badge/License-AGPL3.0-blue.svg)](https://opensource.org/licenses/AGPL-3.0) [![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org/) [![Platform](https://img.shields.io/badge/Platform-EndStone-9cf.svg)](https://endstone.io) [![Downloads](https://img.shields.io/github/downloads/MengHanLOVE1027/endstone-easycheckupdate/total.svg)](https://github.com/MengHanLOVE1027/endstone-easycheckupdate/releases)
 
 </div>
 
@@ -151,7 +149,9 @@ class YourPlugin(Plugin):
 
 #### 2. 创建更新信息 JSON 文件
 
-创建一个包含插件更新信息的 JSON 文件，并将其上传到可访问的服务器上。JSON 文件应包含以下字段：
+创建一个包含插件更新信息的 JSON 文件，并将其上传到可访问的服务器上。支持两种格式：
+
+**格式一：单版本格式（适合只维护最新版本）**
 
 ```json
 {
@@ -163,7 +163,55 @@ class YourPlugin(Plugin):
 }
 ```
 
+**格式二：多版本格式（适合维护多个历史版本）**
+
+数组格式（推荐）：
+```json
+{
+    "latest_version": "1.0.1",
+    "versions": [
+        {
+            "version": "1.0.1",
+            "download_url": "https://example.com/downloads/your_plugin-1.0.1.whl",
+            "update_content": "修复了一些bug，添加了新功能",
+            "author": "您的名字",
+            "update_time": "2023-10-01 12:00:00"
+        },
+        {
+            "version": "1.0.0",
+            "download_url": "https://example.com/downloads/your_plugin-1.0.0.whl",
+            "update_content": "初始版本发布",
+            "author": "您的名字",
+            "update_time": "2023-09-01 10:00:00"
+        }
+    ]
+}
+```
+
+对象格式：
+```json
+{
+    "latest_version": "1.0.1",
+    "versions": {
+        "1.0.1": {
+            "download_url": "https://example.com/downloads/your_plugin-1.0.1.whl",
+            "update_content": "修复了一些bug，添加了新功能",
+            "author": "您的名字",
+            "update_time": "2023-10-01 12:00:00"
+        },
+        "1.0.0": {
+            "download_url": "https://example.com/downloads/your_plugin-1.0.0.whl",
+            "update_content": "初始版本发布",
+            "author": "您的名字",
+            "update_time": "2023-09-01 10:00:00"
+        }
+    }
+}
+```
+
 #### 3. JSON 文件字段说明
+
+**单版本格式字段：**
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -172,6 +220,18 @@ class YourPlugin(Plugin):
 | update_content | 字符串 | 否 | 更新内容说明 |
 | author | 字符串 | 否 | 插件作者 |
 | update_time | 字符串 | 否 | 更新发布时间 |
+
+**多版本格式字段：**
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| latest_version | 字符串 | 是 | 最新版本号 |
+| versions | 数组或对象 | 是 | 版本信息列表，可以是数组格式或对象格式 |
+| versions[].version | 字符串 | 是（数组格式）| 版本号 |
+| versions[].download_url | 字符串 | 是 | 该版本的下载链接 |
+| versions[].update_content | 字符串 | 否 | 更新内容说明 |
+| versions[].author | 字符串 | 否 | 插件作者 |
+| versions[].update_time | 字符串 | 否 | 更新发布时间 |
 
 #### 4. 版本号格式说明
 
@@ -314,7 +374,7 @@ AGPL-3.0 License
 ## 🌟 支持与反馈
 
 - **GitHub Issues**: [提交问题](https://github.com/MengHanLOVE1027/endstone-easycheckupdate/issues)
-- **MineBBS**: [讨论帖](https://www.minebbs.com/resources/easycheckupdate-elp-endstone.15496/)
+- **MineBBS**: [讨论帖](https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/)
 - **作者**: 梦涵LOVE
 
 ---

@@ -17,11 +17,11 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
-plugin_version = "0.1.0"
+plugin_version = "0.1.1"
 plugin_author = ["梦涵LOVE"]
-plugin_website = ""
+plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
-plugin_minebbs_link = ""
+plugin_minebbs_link = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_license = "AGPL-3.0"
 plugin_copyright = "务必保留原作者信息！"
 
@@ -427,33 +427,60 @@ class EasyCheckUpdatePlugin(Plugin):
                     update_data = json.loads(response.read().decode('utf-8'))
 
                 # 检查是否包含必要的信息
+                # 支持两种格式：单版本格式和多版本格式
                 if "version" in update_data and "download_url" in update_data:
+                    # 单版本格式
                     latest_version = update_data["version"]
                     download_url = update_data["download_url"]
                     update_content = update_data.get("update_content", "无更新内容")
                     author = update_data.get("author", "未知作者")
                     update_time = update_data.get("update_time", "未知时间")
+                elif "latest_version" in update_data and "versions" in update_data:
+                    # 多版本格式
+                    latest_version = update_data["latest_version"]
+                    versions = update_data["versions"]
 
-                    # 使用版本比较函数比较版本号
-                    version_comparison = compare_versions(latest_version, current_version)
-                    if version_comparison > 0:
-                        plugin_print(f"="*80, "INFO")
-                        plugin_print(f"插件 {plugin_name} 有新版本: {latest_version} (当前版本: {current_version})")
-                        plugin_print(f"作者: {author}")
-                        plugin_print(f"更新时间: {update_time}")
-                        plugin_print(f"更新内容: {update_content}")
-                        plugin_print(f"下载地址: {download_url}")
-                        plugin_print(f"="*80, "INFO")
-
-                        # 如果启用了自动更新，则下载并更新插件
-                        if auto_update:
-                            self.download_and_update_plugin_from_url(plugin_name, latest_version, download_url)
-                    elif version_comparison < 0:
-                        plugin_print(f"插件 {plugin_name} 的当前版本 {current_version} 比最新版本 {latest_version} 更新", "INFO")
+                    # 获取最新版本的详细信息
+                    if isinstance(versions, list):
+                        # 数组格式
+                        version_info = versions[0] if versions else {}
+                    elif isinstance(versions, dict):
+                        # 对象格式
+                        version_info = versions.get(latest_version, {})
                     else:
-                        plugin_print(f"插件 {plugin_name} 已是最新版本: {current_version}")
+                        plugin_print(f"插件 {plugin_name} 的更新信息格式不正确", "WARNING")
+                        return
+
+                    download_url = version_info.get("download_url", "")
+                    update_content = version_info.get("update_content", "无更新内容")
+                    author = version_info.get("author", "未知作者")
+                    update_time = version_info.get("update_time", "未知时间")
+
+                    if not download_url:
+                        plugin_print(f"插件 {plugin_name} 的更新信息缺少下载链接", "WARNING")
+                        return
                 else:
                     plugin_print(f"插件 {plugin_name} 的更新信息文件缺少必要信息", "WARNING")
+                    return
+
+                # 使用版本比较函数比较版本号
+                version_comparison = compare_versions(latest_version, current_version)
+                if version_comparison > 0:
+                    plugin_print(f"="*80, "INFO")
+                    plugin_print(f"插件 {plugin_name} 有新版本: {latest_version} (当前版本: {current_version})")
+                    plugin_print(f"作者: {author}")
+                    plugin_print(f"更新时间: {update_time}")
+                    plugin_print(f"更新内容: {update_content}")
+                    plugin_print(f"下载地址: {download_url}")
+                    plugin_print(f"="*80, "INFO")
+
+                    # 如果启用了自动更新，则下载并更新插件
+                    if auto_update:
+                        self.download_and_update_plugin_from_url(plugin_name, latest_version, download_url)
+                elif version_comparison < 0:
+                    plugin_print(f"插件 {plugin_name} 的当前版本 {current_version} 比最新版本 {latest_version} 更新", "INFO")
+                else:
+                    plugin_print(f"插件 {plugin_name} 已是最新版本: {current_version}")
                 return
             except Exception as e:
                 plugin_print(f"从 {update_url} 获取插件 {plugin_name} 的更新信息时出错: {e}", "WARNING")

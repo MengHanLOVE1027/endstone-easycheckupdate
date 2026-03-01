@@ -1,7 +1,17 @@
 {
-    "version": "0.1.0",
-    "download_url": "https://github.com/MengHanLOVE1027/endstone-easycheckupdate/releases/download/v0.1.0/endstone_easycheckupdate-0.1.0-py3-none-any.whl",
-    "update_content": "发布EasyCheckUpdate插件",
-    "author": "梦涵LOVE",
-    "update_time": "2026-03-01 11:00:00"
+    "latest_version": "0.1.1",
+    "versions": {
+        "0.1.1": {
+            "download_url": "https://github.com/MengHanLOVE1027/endstone-easycheckupdate/releases/download/v0.1.1/endstone_easycheckupdate-0.1.1-py3-none-any.whl",
+            "update_content": "修复了0.1.0版本中的bug，修改了json的解析逻辑",
+            "author": "梦涵LOVE",
+            "update_time": "2026-03-01 11:20:00"
+        },
+        "0.1.0": {
+            "download_url": "https://github.com/MengHanLOVE1027/endstone-easycheckupdate/releases/download/v0.1.0/endstone_easycheckupdate-0.1.0-py3-none-any.whl",
+            "update_content": "发布EasyCheckUpdate插件",
+            "author": "梦涵LOVE",
+            "update_time": "2026-03-01 11:00:00"
+        }
+    }
 }
