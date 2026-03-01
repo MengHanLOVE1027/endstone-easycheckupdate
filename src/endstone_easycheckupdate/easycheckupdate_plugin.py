@@ -17,7 +17,7 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
-plugin_version = "0.1.2"
+plugin_version = "0.1.3"
 plugin_author = ["梦涵LOVE"]
 plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
@@ -266,12 +266,12 @@ class EasyCheckUpdatePlugin(Plugin):
 
         # 加载或创建配置文件
         self.load_config()
-        print(RandomColor("███████╗ █████╗ ███████╗██╗   ██╗██╗     ██╗   ██╗ ██████╗██╗  ██╗██╗   ██╗██████╗ ██╗██╗     ██╗      █████╗ ██████╗ "))
-        print(RandomColor("██╔════╝██╔══██╗██╔════╝╚██╗ ██╔╝██║     ██║   ██║██╔════╝██║ ██╔╝╚██╗ ██╔╝██╔══██╗██║██║     ██║     ██╔══██╗██╔══██╗"))
-        print(RandomColor("█████╗  ███████║███████╗ ╚████╔╝ ██║     ██║   ██║██║     █████╔╝  ╚████╔╝ ██████╔╝██║██║     ██║     ███████║██████╔╝"))
-        print(RandomColor("██╔══╝  ██╔══██║╚════██║  ╚██╔╝  ██║     ██║   ██║██║     ██╔═██╗   ╚██╔╝  ██╔═══╝ ██║██║     ██║     ██╔══██║██╔══██╗"))
-        print(RandomColor("███████╗██║  ██║███████║   ██║   ███████╗╚██████╔╝╚██████╗██║  ██╗   ██║   ██║     ██║███████╗███████╗██║  ██║██║  ██║"))
-        print(RandomColor("╚══════╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝"))
+        print(RandomColor("███████╗ █████╗ ███████╗██╗   ██╗██╗   ██╗██████╗ ██████╗  █████╗ ████████╗███████╗"))
+        print(RandomColor("██╔════╝██╔══██╗██╔════╝╚██╗ ██╔╝██║   ██║██╔══██╗██╔══██╗██╔══██╗╚══██╔══╝██╔════╝"))
+        print(RandomColor("█████╗  ███████║███████╗ ╚████╔╝ ██║   ██║██████╔╝██║  ██║███████║   ██║   █████╗  "))
+        print(RandomColor("██╔══╝  ██╔══██║╚════██║  ╚██╔╝  ██║   ██║██╔═══╝ ██║  ██║██╔══██║   ██║   ██╔══╝  "))
+        print(RandomColor("███████╗██║  ██║███████║   ██║   ╚██████╔╝██║     ██████╔╝██║  ██║   ██║   ███████╗"))
+        print(RandomColor("╚══════╝╚═╝  ╚═╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝     ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝"))
         print(RandomColor(f"""                                作者：{plugin_author[0]}               版本：{plugin_version}"""))
         plugin_print(f"="*80, "INFO")
         plugin_print(f"{plugin_name} - {plugin_description}")
