@@ -1,0 +1,6 @@
+.idea
+.vscode
+dist
+build
+endstone_easycheckupdate.egg-info
+*.spec

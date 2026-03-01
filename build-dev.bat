@@ -1,0 +1,1 @@
+powershell .\build-dev.ps1
