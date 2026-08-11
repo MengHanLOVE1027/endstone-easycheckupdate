@@ -19,7 +19,7 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
-plugin_version = "0.2.0-beta.8"
+plugin_version = "0.2.0-beta.9"
 plugin_author = ["梦涵LOVE"]
 plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
@@ -1096,7 +1096,7 @@ class EasyCheckUpdatePlugin(Plugin):
                 self._install_from_archive(plugin_name_str, version_str, temp_file, temp_dir)
             else:
                 # .whl 或 .py 单文件
-                self._install_single_file(plugin_name_str, temp_file)
+                self._install_single_file(plugin_name_str, temp_file, version_str)
 
             # 清理临时目录
             try:
@@ -1135,7 +1135,7 @@ class EasyCheckUpdatePlugin(Plugin):
                         return f
         return None
 
-    def _install_single_file(self, plugin_name_str, new_file):
+    def _install_single_file(self, plugin_name_str, new_file, version_str=""):
         """安装单个文件（.whl 或 .py）"""
         plugin_file_path = self._find_plugin_file_path(plugin_name_str)
 
@@ -1170,7 +1170,7 @@ class EasyCheckUpdatePlugin(Plugin):
             plugin_print(t("download.file_updated", str(dest.name)))
 
         # 重载
-        self._reload_after_update(plugin_name_str, "")
+        self._reload_after_update(plugin_name_str, version_str)
 
     def _install_from_archive(self, plugin_name_str, version_str, archive_file, temp_dir):
         """从 ZIP 压缩包安装插件"""
