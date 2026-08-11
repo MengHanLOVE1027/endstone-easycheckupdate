@@ -19,7 +19,7 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
-plugin_version = "0.2.0-beta.5"
+plugin_version = "0.2.0-beta.6"
 plugin_author = ["梦涵LOVE"]
 plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
@@ -203,7 +203,7 @@ I18N_DATA = {
         # ── 命令 / 帮助 ──
         "command.desc": "检查插件更新",
         "command.no_permission": "你没有权限使用此命令",
-        "command.help": "命令帮助:\n/ecu - 显示此帮助信息\n/ecu all - 检查所有插件的更新\n/ecu reload - 重载插件\n/ecu info <插件名称> - 检查指定插件的更新\n/ecu update <插件名称> [版本号] - 更新指定插件\n/ecu info <插件名称> [版本号] - 查看版本列表或版本详情",
+        "command.help": "命令帮助:\n/ecu - 显示此帮助信息\n/ecu all - 检查所有插件的更新\n/ecu reload - 重载插件\n/ecu <插件名称> - 检查指定插件的更新\n/ecu update <插件名称> [版本号] - 更新指定插件\n/ecu info <插件名称> [版本号] - 查看版本列表或版本详情",
         "command.update_usage": "用法: /ecu update <插件名称> [版本号]",
         "command.info_usage": "用法: /ecu info <插件名称> [版本号]",
         "command.checking_update": "正在检查并更新插件 {0}，请查看控制台获取详细信息",
@@ -318,7 +318,7 @@ I18N_DATA = {
         # ── Command / Help ──
         "command.desc": "Check plugin updates",
         "command.no_permission": "You do not have permission to use this command",
-        "command.help": "Command Help:\n/ecu - Show this help\n/ecu all - Check all plugins for updates\n/ecu reload - Reload plugin\n/ecu info <plugin> - Check specified plugin for updates\n/ecu update <plugin> [version] - Update specified plugin\n/ecu info <plugin> [version] - View version list or details",
+        "command.help": "Command Help:\n/ecu - Show this help\n/ecu all - Check all plugins for updates\n/ecu reload - Reload plugin\n/ecu <plugin> - Check specified plugin for updates\n/ecu update <plugin> [version] - Update specified plugin\n/ecu info <plugin> [version] - View version list or details",
         "command.update_usage": "Usage: /ecu update <plugin> [version]",
         "command.info_usage": "Usage: /ecu info <plugin> [version]",
         "command.checking_update": "Checking and updating plugin {0}, check console for details",
@@ -558,13 +558,11 @@ def find_version_key(versions, requested_version):
     return None
 
 
-def print_version_list(plugin_name_str, versions, current_version, recommended_ver, user_is_prerelease):
-    """打印插件的版本列表"""
+def print_version_list(plugin_name_str, versions, current_version, recommended_ver):
+    """打印插件的版本列表（所有用户均可看到全部版本）"""
     plugin_print(t("update.version_list", plugin_name_str))
     sorted_vers = sorted(versions.keys(), key=lambda v: compare_versions(v, "0.0.0"), reverse=True)
     for ver in sorted_vers:
-        if not user_is_prerelease and is_prerelease(ver):
-            continue
         tag = t("general.pre_release" if is_prerelease(ver) else "general.stable")
         marker = t("general.current_version") if compare_versions(ver, current_version) == 0 else ""
         latest = t("general.recommended") if ver == recommended_ver else ""
@@ -1380,10 +1378,31 @@ class EasyCheckUpdatePlugin(Plugin):
                     # 查看版本列表
                     sender.send_message(f"§a{t('command.querying_list', plugin_name_str)}")
                     user_is_prerelease_flag = is_prerelease(pversion)
-                    # 推荐版本：稳定用户→最新正式版，测试用户→最新版本
+                    # 推荐版本逻辑
                     if user_is_prerelease_flag:
-                        recommended_ver = update_data.get("latest_version", "")
+                        # 测试版用户: 1)同基础版本正式版 2)最新测试版 3)最新正式版
+                        base_ver = re.sub(r'[-+].*$', '', pversion)
+                        recommended_ver = ""
+                        # 优先：同基础版本的正式版（如 0.2.0-beta.1 → 0.2.0）
+                        base_key = find_version_key(versions, base_ver)
+                        if base_key and not is_prerelease(base_key):
+                            recommended_ver = base_key
+                        else:
+                            # 其次：最新测试版
+                            for ver in sorted(versions.keys(), key=lambda v: compare_versions(v, "0.0.0"), reverse=True):
+                                if is_prerelease(ver):
+                                    recommended_ver = ver
+                                    break
+                            # 兜底：最新正式版
+                            if not recommended_ver:
+                                for ver in sorted(versions.keys(), key=lambda v: compare_versions(v, "0.0.0"), reverse=True):
+                                    if not is_prerelease(ver):
+                                        recommended_ver = ver
+                                        break
+                        if not recommended_ver:
+                            recommended_ver = update_data.get("latest_version", "")
                     else:
+                        # 正式版用户：推荐最新正式版
                         recommended_ver = ""
                         for ver in sorted(versions.keys(), key=lambda v: compare_versions(v, "0.0.0"), reverse=True):
                             if not is_prerelease(ver):
@@ -1391,7 +1410,7 @@ class EasyCheckUpdatePlugin(Plugin):
                                 break
                         if not recommended_ver:
                             recommended_ver = update_data.get("latest_version", "")
-                    print_version_list(plugin_name_str, versions, pversion, recommended_ver, user_is_prerelease_flag)
+                    print_version_list(plugin_name_str, versions, pversion, recommended_ver)
                 return True
 
             # /ecu <plugin> → 检查指定插件
