@@ -1,9 +1,11 @@
 name: Build & Release
 
 on:
-  push:
+  pull_request:
     branches:
       - main
+    types:
+      - closed
   workflow_dispatch:
 
 concurrency:
@@ -12,38 +14,57 @@ concurrency:
 
 permissions:
   contents: write
-  actions: read
 
 jobs:
-  build:
-    name: Build
-    uses: ./.github/workflows/build.yml
-
-  release:
-    name: Release
-    needs: build
+  build-and-release:
+    name: Build & Release
+    timeout-minutes: 15
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
+    # 仅 PR 合并时触发，关闭(未合并)则跳过
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
 
     steps:
       # ────────────────────────────────────
-      # 1. Checkout（需要 git 历史做 changelog + tag）
+      # 1. 环境准备
       # ────────────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build tools
+        run: pip install build
+
       # ────────────────────────────────────
-      # 2. 检查版本是否已发布
+      # 2. 提取版本号
+      # ────────────────────────────────────
+      - name: Get version from source
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(python -c "import re;c=open('src/endstone_easycheckupdate/easycheckupdate_plugin.py').read();m=re.search(r'^plugin_version\s*=\s*\"(.+?)\"',c,re.M);print(m.group(1) if m else '0.0.0')")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Source version: $VERSION"
+
+          # 判断是否为测试版，输出到 step outputs
+          case "$VERSION" in
+            *beta*|*alpha*|*rc*|*dev*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;;
+            *)                         echo "prerelease=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      # ────────────────────────────────────
+      # 3. 检查是否需要发布
       # ────────────────────────────────────
       - name: Check if version already released
         id: check
         shell: bash
         run: |
-          VERSION="${{ needs.build.outputs.version }}"
+          VERSION="${{ steps.version.outputs.version }}"
           TAG="v${VERSION}"
 
           git fetch --tags --force
@@ -56,13 +77,13 @@ jobs:
           fi
 
       # ────────────────────────────────────
-      # 3. 创建 Tag（首次发布此版本时）
+      # 4. 创建 Tag（首次发布此版本时）
       # ────────────────────────────────────
       - name: Create and push tag
         if: steps.check.outputs.exists == 'false'
         shell: bash
         run: |
-          VERSION="${{ needs.build.outputs.version }}"
+          VERSION="${{ steps.version.outputs.version }}"
           TAG="v${VERSION}"
 
           git config user.name "github-actions[bot]"
@@ -72,17 +93,31 @@ jobs:
           echo "Created and pushed tag: $TAG"
 
       # ────────────────────────────────────
-      # 4. 下载构建产物
+      # 5. 构建 Python wheel
       # ────────────────────────────────────
-      - name: Download artifact
+      - name: Build Python wheel
         if: steps.check.outputs.exists == 'false' || github.event_name == 'workflow_dispatch'
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.build.outputs.artifact_name }}
-          path: dist
+        run: |
+          python -m build --wheel
+          echo "----- dist/ -----"
+          ls -la dist/
 
       # ────────────────────────────────────
-      # 5. 生成 Release 说明
+      # 6. 收集产物
+      # ────────────────────────────────────
+      - name: Collect artifacts
+        if: steps.check.outputs.exists == 'false' || github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          mkdir -p artifacts
+
+          cp dist/*.whl   artifacts/ 2>/dev/null || true
+
+          echo "----- artifacts/ -----"
+          ls -la artifacts/
+
+      # ────────────────────────────────────
+      # 7. 生成 Release 说明
       # ────────────────────────────────────
       - name: Generate release notes
         if: steps.check.outputs.exists == 'false' || github.event_name == 'workflow_dispatch'
@@ -92,7 +127,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          VERSION="${{ needs.build.outputs.version }}"
+          VERSION="${{ steps.version.outputs.version }}"
           TAG="v${VERSION}"
 
           case "$VERSION" in
@@ -100,6 +135,7 @@ jobs:
             *)                         TYPE="🚀 正式版" ;;
           esac
 
+          # 获取上一版本 tag
           git fetch --tags --force
           PREV_TAG=$(git tag --sort=-v:refname | grep -v "${TAG}" | head -n1)
 
@@ -161,18 +197,18 @@ jobs:
           echo "Release notes generated"
 
       # ────────────────────────────────────
-      # 6. 发布 Release
+      # 8. 发布 Release
       # ────────────────────────────────────
       - name: Create GitHub Release
         if: steps.check.outputs.exists == 'false' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ needs.build.outputs.version }}
-          name: "v${{ needs.build.outputs.version }}"
+          tag_name: v${{ steps.version.outputs.version }}
+          name: "v${{ steps.version.outputs.version }}"
           body: ${{ steps.changelog.outputs.body }}
           draft: false
-          prerelease: ${{ needs.build.outputs.is_prerelease == 'true' }}
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
           files: |
-            dist/*.whl
+            artifacts/*.whl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
