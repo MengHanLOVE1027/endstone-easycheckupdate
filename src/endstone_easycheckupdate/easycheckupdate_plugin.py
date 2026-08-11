@@ -19,7 +19,7 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
-plugin_version = "0.2.2-beta.1"
+plugin_version = "0.2.2"
 plugin_author = ["梦涵LOVE"]
 plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
@@ -157,7 +157,7 @@ I18N_DATA = {
         "update.check_done": "检查完成，共检查了 {0} 个支持更新检查的插件",
         "update.no_plugins": "没有找到支持更新检查的插件",
         "update.version_list": "插件 {0} 的可用版本列表 (第{1}/{2}页, {3}-{4}/{5}):",
-        "update.version_list_next": "使用 /ecu info {0} {1} 查看下一页",
+        "update.version_list_next": "使用 /ecu info {0} p{1} 查看下一页",
         "update.version_detail": "插件 {0} 版本 v{1} 的详细信息:",
         "update.fetch_failed": "获取插件 {0} 的更新信息失败，状态码: {1}",
         "update.parse_version_error": "解析版本信息时出错: {0}",
@@ -273,7 +273,7 @@ I18N_DATA = {
         "update.check_done": "Check complete, {0} update-capable plugin(s) checked",
         "update.no_plugins": "No plugins supporting update checks found",
         "update.version_list": "Available versions for plugin {0} (Page {1}/{2}, {3}-{4}/{5}):",
-        "update.version_list_next": "Use /ecu info {0} {1} to view the next page",
+        "update.version_list_next": "Use /ecu info {0} p{1} for next page",
         "update.version_detail": "Details for plugin {0} version v{1}:",
         "update.fetch_failed": "Failed to fetch update info for {0}, status code: {1}",
         "update.parse_version_error": "Error parsing version info: {0}",
@@ -589,7 +589,7 @@ def print_version_list(plugin_name_str, versions, current_version, recommended_v
         latest = t("general.recommended") if ver == recommended_ver else ""
         plugin_print(f"  {i + 1}. v{ver} ({tag}){latest}{marker}")
 
-    if total_pages > 1 and page < total_pages:
+    if page < total_pages:
         plugin_print(t("update.version_list_next", plugin_name_str, page + 1))
 
 
@@ -1015,14 +1015,8 @@ class EasyCheckUpdatePlugin(Plugin):
                                 break
 
                     if not candidate_ver:
-                        # 已是最新版本，允许强制重装
-                        latest_ver = update_data.get("latest_version")
-                        if latest_ver and latest_ver in versions and compare_versions(latest_ver, current_version) == 0:
-                            candidate_ver = latest_ver
-                            explicit_target = True
-                        else:
-                            plugin_print(t("update.up_to_date", plugin_name_str, current_version))
-                            return True
+                        plugin_print(t("update.up_to_date", plugin_name_str, current_version))
+                        return True
 
                     version_info = versions[candidate_ver]
                     if not isinstance(version_info, dict):
@@ -1094,7 +1088,7 @@ class EasyCheckUpdatePlugin(Plugin):
                     break
         if not recommended_ver:
             recommended_ver = update_data.get("latest_version", "")
-        print_version_list(plugin_name_str, versions, pversion, recommended_ver, page=page)
+        print_version_list(plugin_name_str, versions, pversion, recommended_ver, page)
 
     def print_version_detail(self, plugin_name_str, version_str, versions):
         """打印单个版本的详细信息"""
@@ -1433,9 +1427,9 @@ class EasyCheckUpdatePlugin(Plugin):
                     pversion = "unknown"
 
                 if target_ver:
-                    # 纯数字 → 查看指定页码的版本列表
-                    if target_ver.isdigit():
-                        page = int(target_ver)
+                    # p+数字 → 查看指定页码的版本列表
+                    if re.match(r'^p\d+$', target_ver, re.IGNORECASE):
+                        page = int(target_ver[1:])
                         sender.send_message(f"§a{t('command.querying_list', plugin_name_str)}")
                         self._print_version_list_with_recommend(plugin_name_str, versions, pversion, update_data, page=page)
                     else:
