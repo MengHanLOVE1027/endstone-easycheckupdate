@@ -1,0 +1,178 @@
+name: Build & Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build:
+    name: Build
+    uses: ./.github/workflows/build.yml
+
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      # ────────────────────────────────────
+      # 1. Checkout（需要 git 历史做 changelog + tag）
+      # ────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ────────────────────────────────────
+      # 2. 检查版本是否已发布
+      # ────────────────────────────────────
+      - name: Check if version already released
+        id: check
+        shell: bash
+        run: |
+          VERSION="${{ needs.build.outputs.version }}"
+          TAG="v${VERSION}"
+
+          git fetch --tags --force
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag $TAG already exists, skipping."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Tag $TAG does not exist, will create it."
+          fi
+
+      # ────────────────────────────────────
+      # 3. 创建 Tag（首次发布此版本时）
+      # ────────────────────────────────────
+      - name: Create and push tag
+        if: steps.check.outputs.exists == 'false'
+        shell: bash
+        run: |
+          VERSION="${{ needs.build.outputs.version }}"
+          TAG="v${VERSION}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "Created and pushed tag: $TAG"
+
+      # ────────────────────────────────────
+      # 4. 下载构建产物
+      # ────────────────────────────────────
+      - name: Download artifact
+        if: steps.check.outputs.exists == 'false' || github.event_name == 'workflow_dispatch'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.artifact_name }}
+          path: dist
+
+      # ────────────────────────────────────
+      # 5. 生成 Release 说明
+      # ────────────────────────────────────
+      - name: Generate release notes
+        if: steps.check.outputs.exists == 'false' || github.event_name == 'workflow_dispatch'
+        id: changelog
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          VERSION="${{ needs.build.outputs.version }}"
+          TAG="v${VERSION}"
+
+          case "$VERSION" in
+            *beta*|*alpha*|*rc*|*dev*) TYPE="🧪 测试版" ;;
+            *)                         TYPE="🚀 正式版" ;;
+          esac
+
+          git fetch --tags --force
+          PREV_TAG=$(git tag --sort=-v:refname | grep -v "${TAG}" | head -n1)
+
+          if [ -n "$PREV_TAG" ]; then
+            DETAILS=$(gh api "repos/${{ github.repository }}/compare/${PREV_TAG}...HEAD" \
+              --jq '[.commits[]? | select(.author.login != "github-actions[bot]")] | map("- \(.commit.message | split("\n")[0]) (@\(.author.login))") | join("\n")' \
+              2>/dev/null || echo "")
+
+            AUTHORS=$(gh api "repos/${{ github.repository }}/compare/${PREV_TAG}...HEAD" \
+              --jq '[.commits[]?.author.login // empty] | unique | map(select(. != "github-actions[bot]")) | map("@" + .) | join(" ")' \
+              2>/dev/null || echo "")
+
+            CHANGELOG_LINK="https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${TAG}"
+          else
+            DETAILS="- 🎉 EasyCheckUpdate v${VERSION} 首次发布"
+            AUTHORS=""
+            CHANGELOG_LINK=""
+          fi
+
+          DETAILS="${DETAILS:-（暂无提交信息）}"
+          AUTHORS="${AUTHORS:-（暂无）}"
+
+          cat > /tmp/release_body.md <<BODYEOF
+          ## ${TYPE}: EasyCheckUpdate v${VERSION}
+
+          ### 📦 下载 · Downloads
+
+          | 平台 | 文件 |
+          |------|------|
+          | 🐍 Python | \`*.whl\` |
+
+          ### 📝 更新内容 · Changes
+
+          ${DETAILS}
+
+          ### 👥 贡献者 · Contributors
+
+          ${AUTHORS}
+
+          ### 🔧 安装 · Installation
+
+          \`\`\`bash
+          pip install endstone_easycheckupdate-*.whl
+          \`\`\`
+
+          或从下方 Assets 下载 .whl 文件，放入插件目录即可。
+          BODYEOF
+
+          if [ -n "$CHANGELOG_LINK" ]; then
+            printf '\n**Full Changelog**: %s\n' "$CHANGELOG_LINK" >> /tmp/release_body.md
+          fi
+
+          {
+            echo 'body<<BODYEOF'
+            cat /tmp/release_body.md
+            echo 'BODYEOF'
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Release notes generated"
+
+      # ────────────────────────────────────
+      # 6. 发布 Release
+      # ────────────────────────────────────
+      - name: Create GitHub Release
+        if: steps.check.outputs.exists == 'false' || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.build.outputs.version }}
+          name: "v${{ needs.build.outputs.version }}"
+          body: ${{ steps.changelog.outputs.body }}
+          draft: false
+          prerelease: ${{ needs.build.outputs.is_prerelease == 'true' }}
+          files: |
+            dist/*.whl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
