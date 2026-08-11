@@ -19,7 +19,7 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
-plugin_version = "0.2.0-beta.3"
+plugin_version = "0.2.0-beta.4"
 plugin_author = ["梦涵LOVE"]
 plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
@@ -203,7 +203,7 @@ I18N_DATA = {
         # ── 命令 / 帮助 ──
         "command.desc": "检查插件更新",
         "command.no_permission": "你没有权限使用此命令",
-        "command.help": "命令帮助:\n/ecu - 显示此帮助信息\n/ecu all - 检查所有插件的更新\n/ecu reload - 重载插件\n/ecu <插件名称> - 检查指定插件的更新\n/ecu update <插件名称> [版本号] - 更新指定插件\n/ecu info <插件名称> [版本号] - 查看版本列表或版本详情",
+        "command.help": "命令帮助:\n/ecu - 显示此帮助信息\n/ecu all - 检查所有插件的更新\n/ecu reload - 重载插件\n/ecu info <插件名称> - 检查指定插件的更新\n/ecu update <插件名称> [版本号] - 更新指定插件\n/ecu info <插件名称> [版本号] - 查看版本列表或版本详情",
         "command.update_usage": "用法: /ecu update <插件名称> [版本号]",
         "command.info_usage": "用法: /ecu info <插件名称> [版本号]",
         "command.checking_update": "正在检查并更新插件 {0}，请查看控制台获取详细信息",
@@ -318,7 +318,7 @@ I18N_DATA = {
         # ── Command / Help ──
         "command.desc": "Check plugin updates",
         "command.no_permission": "You do not have permission to use this command",
-        "command.help": "Command Help:\n/ecu - Show this help\n/ecu all - Check all plugins for updates\n/ecu reload - Reload plugin\n/ecu <plugin> - Check specified plugin for updates\n/ecu update <plugin> [version] - Update specified plugin\n/ecu info <plugin> [version] - View version list or details",
+        "command.help": "Command Help:\n/ecu - Show this help\n/ecu all - Check all plugins for updates\n/ecu reload - Reload plugin\n/ecu info <plugin> - Check specified plugin for updates\n/ecu update <plugin> [version] - Update specified plugin\n/ecu info <plugin> [version] - View version list or details",
         "command.update_usage": "Usage: /ecu update <plugin> [version]",
         "command.info_usage": "Usage: /ecu info <plugin> [version]",
         "command.checking_update": "Checking and updating plugin {0}, check console for details",
@@ -596,6 +596,7 @@ class EasyCheckUpdatePlugin(Plugin):
                 "/easycheckupdate reload",
                 "/easycheckupdate update <plugin_name: str> [version: str]",
                 "/easycheckupdate info <plugin_name: str> [version: str]",
+                "/easycheckupdate <plugin_name: str>",
             ],
             "permissions": ["easycheckupdate.command.use"],
             "aliases": ["ecu"],
@@ -848,8 +849,8 @@ class EasyCheckUpdatePlugin(Plugin):
                     return p
         return None
 
-    def check_all_plugins_update(self):
-        """检查所有插件的更新"""
+    def check_all_plugins_update(self, force=False):
+        """检查所有插件的更新。force=True 时忽略间隔限制"""
         if self._checking:
             plugin_print("已有检查任务正在运行，跳过本次检查")
             return
@@ -859,7 +860,7 @@ class EasyCheckUpdatePlugin(Plugin):
             plugin_print(t("update.checking_all"))
 
             current_time = time.time()
-            if current_time - self.last_check_time < self.check_interval:
+            if not force and current_time - self.last_check_time < self.check_interval:
                 remaining = int(self.check_interval - (current_time - self.last_check_time))
                 plugin_print(f"距离上次检查不足 {self.check_interval} 秒（还需 {remaining} 秒），跳过本次检查")
                 return
@@ -1301,7 +1302,7 @@ class EasyCheckUpdatePlugin(Plugin):
 
             if sub == "all":
                 # /ecu all → 检查全部
-                self.check_all_plugins_update()
+                self.check_all_plugins_update(force=True)
                 sender.send_message(f"§a{t('command.checking_all')}")
                 return True
 
