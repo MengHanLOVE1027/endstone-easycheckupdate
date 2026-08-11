@@ -19,7 +19,7 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
-plugin_version = "0.2.0-beta.6"
+plugin_version = "0.2.0-beta.7"
 plugin_author = ["梦涵LOVE"]
 plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
@@ -203,9 +203,9 @@ I18N_DATA = {
         # ── 命令 / 帮助 ──
         "command.desc": "检查插件更新",
         "command.no_permission": "你没有权限使用此命令",
-        "command.help": "命令帮助:\n/ecu - 显示此帮助信息\n/ecu all - 检查所有插件的更新\n/ecu reload - 重载插件\n/ecu <插件名称> - 检查指定插件的更新\n/ecu update <插件名称> [版本号] - 更新指定插件\n/ecu info <插件名称> [版本号] - 查看版本列表或版本详情",
-        "command.update_usage": "用法: /ecu update <插件名称> [版本号]",
-        "command.info_usage": "用法: /ecu info <插件名称> [版本号]",
+        "command.help": "命令帮助:\n/ecu - 显示此帮助信息\n/ecu all - 检查所有插件的更新\n/ecu reload - 重载插件\n/ecu <插件名称> - 检查指定插件的更新\n/ecu update <插件名称> - 更新指定插件\n/ecu info <插件名称> - 查看版本列表",
+        "command.update_usage": "用法: /ecu update <插件名称>",
+        "command.info_usage": "用法: /ecu info <插件名称>",
         "command.checking_update": "正在检查并更新插件 {0}，请查看控制台获取详细信息",
         "command.plugin_not_found": "未找到插件: {0}",
         "command.querying_detail": "正在查询插件 {0} 版本 v{1} 的详细信息，请查看控制台",
@@ -318,9 +318,9 @@ I18N_DATA = {
         # ── Command / Help ──
         "command.desc": "Check plugin updates",
         "command.no_permission": "You do not have permission to use this command",
-        "command.help": "Command Help:\n/ecu - Show this help\n/ecu all - Check all plugins for updates\n/ecu reload - Reload plugin\n/ecu <plugin> - Check specified plugin for updates\n/ecu update <plugin> [version] - Update specified plugin\n/ecu info <plugin> [version] - View version list or details",
-        "command.update_usage": "Usage: /ecu update <plugin> [version]",
-        "command.info_usage": "Usage: /ecu info <plugin> [version]",
+        "command.help": "Command Help:\n/ecu - Show this help\n/ecu all - Check all plugins for updates\n/ecu reload - Reload plugin\n/ecu <plugin> - Check specified plugin for updates\n/ecu update <plugin> - Update specified plugin\n/ecu info <plugin> - View version list",
+        "command.update_usage": "Usage: /ecu update <plugin>",
+        "command.info_usage": "Usage: /ecu info <plugin>",
         "command.checking_update": "Checking and updating plugin {0}, check console for details",
         "command.plugin_not_found": "Plugin not found: {0}",
         "command.querying_detail": "Querying details for {0} v{1}, check console",
@@ -592,8 +592,7 @@ class EasyCheckUpdatePlugin(Plugin):
                 "/easycheckupdate",
                 "/easycheckupdate all",
                 "/easycheckupdate reload",
-                "/easycheckupdate update <plugin_name: str> [version: str]",
-                "/easycheckupdate info <plugin_name: str> [version: str]",
+                "/easycheckupdate (update|info)<action: str> <plugin_name: str>",
                 "/easycheckupdate <plugin_name: str>",
             ],
             "permissions": ["easycheckupdate.command.use"],
