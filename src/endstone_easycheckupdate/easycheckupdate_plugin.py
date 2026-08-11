@@ -19,7 +19,7 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
-plugin_version = "0.2.0-beta.4"
+plugin_version = "0.2.0-beta.5"
 plugin_author = ["梦涵LOVE"]
 plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
@@ -1380,8 +1380,18 @@ class EasyCheckUpdatePlugin(Plugin):
                     # 查看版本列表
                     sender.send_message(f"§a{t('command.querying_list', plugin_name_str)}")
                     user_is_prerelease_flag = is_prerelease(pversion)
-                    latest_ver = update_data.get("latest_version", "")
-                    print_version_list(plugin_name_str, versions, pversion, latest_ver, user_is_prerelease_flag)
+                    # 推荐版本：稳定用户→最新正式版，测试用户→最新版本
+                    if user_is_prerelease_flag:
+                        recommended_ver = update_data.get("latest_version", "")
+                    else:
+                        recommended_ver = ""
+                        for ver in sorted(versions.keys(), key=lambda v: compare_versions(v, "0.0.0"), reverse=True):
+                            if not is_prerelease(ver):
+                                recommended_ver = ver
+                                break
+                        if not recommended_ver:
+                            recommended_ver = update_data.get("latest_version", "")
+                    print_version_list(plugin_name_str, versions, pversion, recommended_ver, user_is_prerelease_flag)
                 return True
 
             # /ecu <plugin> → 检查指定插件

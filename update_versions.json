@@ -1,6 +1,12 @@
 {
-    "latest_version": "0.2.0-beta.4",
+    "latest_version": "0.2.0-beta.5",
     "versions": {
+        "0.2.0-beta.5": {
+            "download_url": "https://github.com/MengHanLOVE1027/endstone-easycheckupdate/releases/download/v0.2.0-beta.5/endstone_easycheckupdate-0.2.0-beta.5-py3-none-any.whl",
+            "update_content": "feat: 更新版本至0.2.0-beta.5，修复推荐版本指向，稳定用户推荐最新正式版",
+            "author": "梦涵LOVE",
+            "update_time": "2026-08-11 11:17:00"
+        },
         "0.2.0-beta.4": {
             "download_url": "https://github.com/MengHanLOVE1027/endstone-easycheckupdate/releases/download/v0.2.0-beta.4/endstone_easycheckupdate-0.2.0-beta.4-py3-none-any.whl",
             "update_content": "feat: 更新版本至0.2.0-beta.4，修复手动检查间隔限制、修复usages子命令解析并优化帮助文本",
