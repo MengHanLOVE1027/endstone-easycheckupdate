@@ -19,7 +19,7 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
-plugin_version = "0.2.0-beta.1"
+plugin_version = "0.2.0-beta.2"
 plugin_author = ["梦涵LOVE"]
 plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
@@ -591,12 +591,12 @@ class EasyCheckUpdatePlugin(Plugin):
         "easycheckupdate": {
             "description": "检查插件更新 / Check plugin updates",
             "usages": [
-                "/ecu",
-                "/ecu all",
-                "/ecu reload",
-                "/ecu <plugin_name: str>",
-                "/ecu update <plugin_name: str> [version: str]",
-                "/ecu info <plugin_name: str> [version: str]",
+                "/easycheckupdate",
+                "/easycheckupdate all",
+                "/easycheckupdate reload",
+                "/easycheckupdate <plugin_name: str>",
+                "/easycheckupdate update <plugin_name: str> [version: str]",
+                "/easycheckupdate info <plugin_name: str> [version: str]",
             ],
             "permissions": ["easycheckupdate.command.use"],
             "aliases": ["ecu"],
@@ -619,6 +619,8 @@ class EasyCheckUpdatePlugin(Plugin):
         self.last_check_time = 0
         self.plugin_config = {}
         self.config_backup_path = plugin_path / "config" / ".config_backup.json"
+        self._checking = False  # 防重入锁
+        self._periodic_scheduled = False  # 防重复调度
 
     # ── 配置方法 ──
 
@@ -826,7 +828,12 @@ class EasyCheckUpdatePlugin(Plugin):
 
     def _schedule_next_periodic_check(self):
         """安排下一次周期性检查"""
+        if self._periodic_scheduled:
+            return
+        self._periodic_scheduled = True
+
         def _periodic_check():
+            self._periodic_scheduled = False
             self.check_all_plugins_update()
             self._schedule_next_periodic_check()
 
@@ -844,31 +851,41 @@ class EasyCheckUpdatePlugin(Plugin):
 
     def check_all_plugins_update(self):
         """检查所有插件的更新"""
-        plugin_print(t("update.checking_all"))
-
-        current_time = time.time()
-        if current_time - self.last_check_time < self.check_interval:
-            remaining = int(self.check_interval - (current_time - self.last_check_time))
-            plugin_print(f"距离上次检查不足 {self.check_interval} 秒（还需 {remaining} 秒），跳过本次检查")
+        if self._checking:
+            plugin_print("已有检查任务正在运行，跳过本次检查")
             return
+        self._checking = True
 
-        self.last_check_time = current_time
-        self.save_config()
+        try:
+            plugin_print(t("update.checking_all"))
 
-        checked_count = 0
-        for plugin in self.server.plugin_manager.plugins:
-            pname = plugin.name
-            try:
-                pversion = plugin.version
-            except AttributeError:
-                pversion = "unknown"
-            if self.check_plugin_update(pname, pversion):
-                checked_count += 1
+            current_time = time.time()
+            if current_time - self.last_check_time < self.check_interval:
+                remaining = int(self.check_interval - (current_time - self.last_check_time))
+                plugin_print(f"距离上次检查不足 {self.check_interval} 秒（还需 {remaining} 秒），跳过本次检查")
+                return
 
-        if checked_count > 0:
-            plugin_print(t("update.check_done", str(checked_count)))
-        else:
-            plugin_print(t("update.no_plugins"))
+            self.last_check_time = current_time
+            self.save_config()
+
+            checked_count = 0
+            for plugin in self.server.plugin_manager.plugins:
+                pname = plugin.name
+                try:
+                    pversion = plugin.version
+                except AttributeError:
+                    pversion = "0.0.0"
+                if pversion is None:
+                    pversion = "0.0.0"
+                if self.check_plugin_update(pname, pversion):
+                    checked_count += 1
+
+            if checked_count > 0:
+                plugin_print(t("update.check_done", str(checked_count)))
+            else:
+                plugin_print(t("update.no_plugins"))
+        finally:
+            self._checking = False
 
     def check_plugin_update(self, plugin_name_str, current_version, auto_update=False, target_version=None):
         """检查指定插件的更新
@@ -883,6 +900,10 @@ class EasyCheckUpdatePlugin(Plugin):
             bool: 是否成功获取到更新信息（用于计数）
         """
         plugin_print(t("update.checking", plugin_name_str))
+
+        # 兼容 version 为 None 或空字符串的插件
+        if not current_version:
+            current_version = "0.0.0"
 
         plugin_obj = self.get_plugin_update_info(plugin_name_str)
         if not plugin_obj:
