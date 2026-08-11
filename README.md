@@ -18,6 +18,8 @@ Powered by EndStone.<br>
 
 [![Github Version](https://img.shields.io/github/v/release/MengHanLOVE1027/endstone-easycheckupdate)](https://github.com/MengHanLOVE1027/endstone-easycheckupdate/releases) [![GitHub License](https://img.shields.io/badge/License-AGPL3.0-blue.svg)](https://opensource.org/licenses/AGPL-3.0) [![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org/) [![Platform](https://img.shields.io/badge/Platform-EndStone-9cf.svg)](https://endstone.io) [![Downloads](https://img.shields.io/github/downloads/MengHanLOVE1027/endstone-easycheckupdate/total.svg)](https://github.com/MengHanLOVE1027/endstone-easycheckupdate/releases)
 
+![](https://img.shields.io/github/v/release/MengHanLOVE1027/endstone-easycheckupdate?style=flat-square&logo=github&color=orange&label=Version) ![](https://img.shields.io/github/downloads/MengHanLOVE1027/endstone-easycheckupdate/total?style=flat-square&logo=github&color=33ccff&label=Downloads) ![](https://img.shields.io/github/languages/top/MengHanLOVE1027/endstone-easycheckupdate?style=flat-square&logo=python&color=yellow) ![](https://img.shields.io/github/stars/MengHanLOVE1027/endstone-easycheckupdate?style=flat-square&logo=github&color=yellow&label=Stars) ![](https://img.shields.io/github/last-commit/MengHanLOVE1027/endstone-easycheckupdate?style=flat-square&color=lightgrey) ![](https://komarev.com/ghpvc/?username=MengHanLOVE1027&repo=endstone-easycheckupdate&color=green&style=flat-square&label=Views)
+
 </div>
 
 ---
