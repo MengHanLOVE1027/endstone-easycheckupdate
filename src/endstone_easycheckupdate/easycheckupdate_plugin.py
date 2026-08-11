@@ -19,7 +19,7 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
-plugin_version = "0.2.1"
+plugin_version = "0.2.2-beta.1"
 plugin_author = ["梦涵LOVE"]
 plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
@@ -156,7 +156,8 @@ I18N_DATA = {
         "update.no_update_url": "未找到插件 {0} 的 update_url 字段，无法检查更新",
         "update.check_done": "检查完成，共检查了 {0} 个支持更新检查的插件",
         "update.no_plugins": "没有找到支持更新检查的插件",
-        "update.version_list": "插件 {0} 的可用版本列表:",
+        "update.version_list": "插件 {0} 的可用版本列表 (第{1}/{2}页, {3}-{4}/{5}):",
+        "update.version_list_next": "使用 /ecu info {0} {1} 查看下一页",
         "update.version_detail": "插件 {0} 版本 v{1} 的详细信息:",
         "update.fetch_failed": "获取插件 {0} 的更新信息失败，状态码: {1}",
         "update.parse_version_error": "解析版本信息时出错: {0}",
@@ -271,7 +272,8 @@ I18N_DATA = {
         "update.no_update_url": "update_url field not found for plugin {0}, unable to check for updates",
         "update.check_done": "Check complete, {0} update-capable plugin(s) checked",
         "update.no_plugins": "No plugins supporting update checks found",
-        "update.version_list": "Available versions for plugin {0}:",
+        "update.version_list": "Available versions for plugin {0} (Page {1}/{2}, {3}-{4}/{5}):",
+        "update.version_list_next": "Use /ecu info {0} {1} to view the next page",
         "update.version_detail": "Details for plugin {0} version v{1}:",
         "update.fetch_failed": "Failed to fetch update info for {0}, status code: {1}",
         "update.parse_version_error": "Error parsing version info: {0}",
@@ -565,15 +567,30 @@ def normalize_version(ver: str):
     return ver
 
 
-def print_version_list(plugin_name_str, versions, current_version, recommended_ver):
-    """打印插件的版本列表（所有用户均可看到全部版本）"""
-    plugin_print(t("update.version_list", plugin_name_str))
+def print_version_list(plugin_name_str, versions, current_version, recommended_ver, page=1, per_page=10):
+    """打印插件的版本列表（支持分页）"""
     sorted_vers = sorted(versions.keys(), key=lambda v: compare_versions(v, "0.0.0"), reverse=True)
-    for ver in sorted_vers:
+    total = len(sorted_vers)
+    total_pages = max(1, (total + per_page - 1) // per_page)
+
+    if page < 1:
+        page = 1
+    if page > total_pages:
+        page = total_pages
+
+    start = (page - 1) * per_page
+    end = min(start + per_page, total)
+
+    plugin_print(t("update.version_list", plugin_name_str, page, total_pages, start + 1, end, total))
+    for i in range(start, end):
+        ver = sorted_vers[i]
         tag = t("general.pre_release" if is_prerelease(ver) else "general.stable")
         marker = t("general.current_version") if compare_versions(ver, current_version) == 0 else ""
         latest = t("general.recommended") if ver == recommended_ver else ""
-        plugin_print(f"  v{ver} ({tag}){latest}{marker}")
+        plugin_print(f"  {i + 1}. v{ver} ({tag}){latest}{marker}")
+
+    if total_pages > 1 and page < total_pages:
+        plugin_print(t("update.version_list_next", plugin_name_str, page + 1))
 
 
 # ============================================================
@@ -980,21 +997,16 @@ class EasyCheckUpdatePlugin(Plugin):
                     sorted_vers = sorted(versions.keys(), key=lambda v: compare_versions(v, "0.0.0"), reverse=True)
 
                     if user_is_prerelease_flag:
-                        # 测试版用户：1) 同基础正式版 > 2) 最新测试版 > 3) 最新正式版
-                        base_ver = re.sub(r'[-+].*$', '', current_version)
-                        base_key = find_version_key(versions, base_ver)
-                        if base_key and not is_prerelease(base_key) and compare_versions(base_key, current_version) > 0:
-                            candidate_ver = base_key
-                        else:
+                        # 测试版用户：1) 最新正式版 > 2) 最新测试版
+                        for ver in sorted_vers:
+                            if not is_prerelease(ver) and compare_versions(ver, current_version) > 0:
+                                candidate_ver = ver
+                                break
+                        if not candidate_ver:
                             for ver in sorted_vers:
                                 if is_prerelease(ver) and compare_versions(ver, current_version) > 0:
                                     candidate_ver = ver
                                     break
-                            if not candidate_ver:
-                                for ver in sorted_vers:
-                                    if not is_prerelease(ver) and compare_versions(ver, current_version) > 0:
-                                        candidate_ver = ver
-                                        break
                     else:
                         # 正式版用户：最新正式版
                         for ver in sorted_vers:
@@ -1057,6 +1069,32 @@ class EasyCheckUpdatePlugin(Plugin):
         except Exception as e:
             plugin_print(t("update.check_error", plugin_name_str, str(e)), "ERROR")
             return False
+
+    def _print_version_list_with_recommend(self, plugin_name_str, versions, pversion, update_data, page=1):
+        """计算推荐版本并打印分页版本列表"""
+        user_is_prerelease_flag = is_prerelease(pversion)
+        sorted_vers = sorted(versions.keys(), key=lambda v: compare_versions(v, "0.0.0"), reverse=True)
+        recommended_ver = ""
+        if user_is_prerelease_flag:
+            # 测试版用户: 1)最新正式版 2)最新测试版
+            for ver in sorted_vers:
+                if not is_prerelease(ver):
+                    recommended_ver = ver
+                    break
+            if not recommended_ver:
+                for ver in sorted_vers:
+                    if is_prerelease(ver):
+                        recommended_ver = ver
+                        break
+        else:
+            # 正式版用户：最新正式版
+            for ver in sorted_vers:
+                if not is_prerelease(ver):
+                    recommended_ver = ver
+                    break
+        if not recommended_ver:
+            recommended_ver = update_data.get("latest_version", "")
+        print_version_list(plugin_name_str, versions, pversion, recommended_ver, page=page)
 
     def print_version_detail(self, plugin_name_str, version_str, versions):
         """打印单个版本的详细信息"""
@@ -1395,46 +1433,19 @@ class EasyCheckUpdatePlugin(Plugin):
                     pversion = "unknown"
 
                 if target_ver:
-                    # 查看指定版本详情
-                    sender.send_message(f"§a{t('command.querying_detail', plugin_name_str, target_ver)}")
-                    self.print_version_detail(plugin_name_str, target_ver, versions)
-                else:
-                    # 查看版本列表
-                    sender.send_message(f"§a{t('command.querying_list', plugin_name_str)}")
-                    user_is_prerelease_flag = is_prerelease(pversion)
-                    # 推荐版本逻辑
-                    if user_is_prerelease_flag:
-                        # 测试版用户: 1)同基础版本正式版 2)最新测试版 3)最新正式版
-                        base_ver = re.sub(r'[-+].*$', '', pversion)
-                        recommended_ver = ""
-                        # 优先：同基础版本的正式版（如 0.2.0-beta.1 → 0.2.0）
-                        base_key = find_version_key(versions, base_ver)
-                        if base_key and not is_prerelease(base_key):
-                            recommended_ver = base_key
-                        else:
-                            # 其次：最新测试版
-                            for ver in sorted(versions.keys(), key=lambda v: compare_versions(v, "0.0.0"), reverse=True):
-                                if is_prerelease(ver):
-                                    recommended_ver = ver
-                                    break
-                            # 兜底：最新正式版
-                            if not recommended_ver:
-                                for ver in sorted(versions.keys(), key=lambda v: compare_versions(v, "0.0.0"), reverse=True):
-                                    if not is_prerelease(ver):
-                                        recommended_ver = ver
-                                        break
-                        if not recommended_ver:
-                            recommended_ver = update_data.get("latest_version", "")
+                    # 纯数字 → 查看指定页码的版本列表
+                    if target_ver.isdigit():
+                        page = int(target_ver)
+                        sender.send_message(f"§a{t('command.querying_list', plugin_name_str)}")
+                        self._print_version_list_with_recommend(plugin_name_str, versions, pversion, update_data, page=page)
                     else:
-                        # 正式版用户：推荐最新正式版
-                        recommended_ver = ""
-                        for ver in sorted(versions.keys(), key=lambda v: compare_versions(v, "0.0.0"), reverse=True):
-                            if not is_prerelease(ver):
-                                recommended_ver = ver
-                                break
-                        if not recommended_ver:
-                            recommended_ver = update_data.get("latest_version", "")
-                    print_version_list(plugin_name_str, versions, pversion, recommended_ver)
+                        # 查看指定版本详情
+                        sender.send_message(f"§a{t('command.querying_detail', plugin_name_str, target_ver)}")
+                        self.print_version_detail(plugin_name_str, target_ver, versions)
+                else:
+                    # 查看版本列表（第1页）
+                    sender.send_message(f"§a{t('command.querying_list', plugin_name_str)}")
+                    self._print_version_list_with_recommend(plugin_name_str, versions, pversion, update_data)
                 return True
 
             if sub == "check":
