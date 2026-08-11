@@ -1,6 +1,12 @@
 {
-    "latest_version": "0.2.2",
+    "latest_version": "0.2.3-beta.1",
     "versions": {
+        "0.2.3-beta.1": {
+            "download_url": "https://github.com/MengHanLOVE1027/endstone-easycheckupdate/releases/download/v0.2.3-beta.1/endstone_easycheckupdate-0.2.3b1-py3-none-any.whl",
+            "update_content": "feat: v0.2.3-beta.1 - 测试构建发布流程",
+            "author": "梦涵LOVE",
+            "update_time": "2026-08-12 00:58:00"
+        },
         "0.2.2": {
             "download_url": "https://github.com/MengHanLOVE1027/endstone-easycheckupdate/releases/download/v0.2.2/endstone_easycheckupdate-0.2.2-py3-none-any.whl",
             "update_content": "feat: 更新版本至0.2.2，修复版本号及完善更新内容",
