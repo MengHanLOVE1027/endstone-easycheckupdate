@@ -383,6 +383,13 @@ Issues and Pull Requests are welcome!
 
 **⭐ If this project helps you, please give us a Star!**
 
-[![Star History Chart](https://api.star-history.com/svg?repos=MengHanLOVE1027/endstone-easycheckupdate&type=Date)](https://star-history.com/#MengHanLOVE1027/endstone-easycheckupdate&Date)
+## Star History
 
+<a href="https://www.star-history.com/?type=date&repos=MengHanLOVE1027%2Fendstone-easycheckupdate">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=MengHanLOVE1027/endstone-easycheckupdate&type=date&theme=dark&legend=top-left&sealed_token=N3NoKypS9wudPmGalgZ2EhZRfhXuULA3_UVugUUXinPndz0SvNeow0gn81maNzrGq5ldfDcj6p5kzvug07bAXY2jLrKxp7ocjTkAnTl9ClQDWRHRAWIpZFAOK9SYAJIbhSyBp0da-n1mkXLBZYYp6_Ky3PbG1-XHVgPV7kpesratpWrbYVuV6X6YZ6OK" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=MengHanLOVE1027/endstone-easycheckupdate&type=date&legend=top-left&sealed_token=N3NoKypS9wudPmGalgZ2EhZRfhXuULA3_UVugUUXinPndz0SvNeow0gn81maNzrGq5ldfDcj6p5kzvug07bAXY2jLrKxp7ocjTkAnTl9ClQDWRHRAWIpZFAOK9SYAJIbhSyBp0da-n1mkXLBZYYp6_Ky3PbG1-XHVgPV7kpesratpWrbYVuV6X6YZ6OK" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=MengHanLOVE1027/endstone-easycheckupdate&type=date&legend=top-left&sealed_token=N3NoKypS9wudPmGalgZ2EhZRfhXuULA3_UVugUUXinPndz0SvNeow0gn81maNzrGq5ldfDcj6p5kzvug07bAXY2jLrKxp7ocjTkAnTl9ClQDWRHRAWIpZFAOK9SYAJIbhSyBp0da-n1mkXLBZYYp6_Ky3PbG1-XHVgPV7kpesratpWrbYVuV6X6YZ6OK" />
+ </picture>
+</a>
 </div>
