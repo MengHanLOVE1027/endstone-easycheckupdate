@@ -19,7 +19,7 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
-plugin_version = "0.2.0"
+plugin_version = "0.2.1"
 plugin_author = ["梦涵LOVE"]
 plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
@@ -977,18 +977,40 @@ class EasyCheckUpdatePlugin(Plugin):
                     # 智能选择最佳版本
                     user_is_prerelease_flag = is_prerelease(current_version)
                     candidate_ver = None
+                    sorted_vers = sorted(versions.keys(), key=lambda v: compare_versions(v, "0.0.0"), reverse=True)
 
-                    for ver in versions:
-                        if not user_is_prerelease_flag and is_prerelease(ver):
-                            continue
-                        if compare_versions(ver, current_version) <= 0:
-                            continue
-                        if not candidate_ver or compare_versions(ver, candidate_ver) < 0:
-                            candidate_ver = ver
+                    if user_is_prerelease_flag:
+                        # 测试版用户：1) 同基础正式版 > 2) 最新测试版 > 3) 最新正式版
+                        base_ver = re.sub(r'[-+].*$', '', current_version)
+                        base_key = find_version_key(versions, base_ver)
+                        if base_key and not is_prerelease(base_key) and compare_versions(base_key, current_version) > 0:
+                            candidate_ver = base_key
+                        else:
+                            for ver in sorted_vers:
+                                if is_prerelease(ver) and compare_versions(ver, current_version) > 0:
+                                    candidate_ver = ver
+                                    break
+                            if not candidate_ver:
+                                for ver in sorted_vers:
+                                    if not is_prerelease(ver) and compare_versions(ver, current_version) > 0:
+                                        candidate_ver = ver
+                                        break
+                    else:
+                        # 正式版用户：最新正式版
+                        for ver in sorted_vers:
+                            if not is_prerelease(ver) and compare_versions(ver, current_version) > 0:
+                                candidate_ver = ver
+                                break
 
                     if not candidate_ver:
-                        plugin_print(t("update.up_to_date", plugin_name_str, current_version))
-                        return True
+                        # 已是最新版本，允许强制重装
+                        latest_ver = update_data.get("latest_version")
+                        if latest_ver and latest_ver in versions and compare_versions(latest_ver, current_version) == 0:
+                            candidate_ver = latest_ver
+                            explicit_target = True
+                        else:
+                            plugin_print(t("update.up_to_date", plugin_name_str, current_version))
+                            return True
 
                     version_info = versions[candidate_ver]
                     if not isinstance(version_info, dict):
