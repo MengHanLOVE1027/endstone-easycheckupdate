@@ -19,7 +19,7 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
-plugin_version = "0.2.0-beta.9"
+plugin_version = "0.2.0"
 plugin_author = ["梦涵LOVE"]
 plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
@@ -1138,36 +1138,19 @@ class EasyCheckUpdatePlugin(Plugin):
     def _install_single_file(self, plugin_name_str, new_file, version_str=""):
         """安装单个文件（.whl 或 .py）"""
         plugin_file_path = self._find_plugin_file_path(plugin_name_str)
+        dest = Path("./plugins") / new_file.name
 
+        # 删除旧文件
         if plugin_file_path and plugin_file_path.exists():
-            # 备份旧文件
-            backup_path = plugin_file_path.with_suffix(plugin_file_path.suffix + ".bak")
-            try:
-                shutil.copy2(plugin_file_path, backup_path)
-                plugin_print(t("download.backed_up", str(backup_path)))
-            except Exception as e:
-                plugin_print(t("download.backup_failed", str(e)), "WARNING")
-
-            # 替换文件
             try:
                 plugin_file_path.unlink()
-                shutil.copy2(new_file, plugin_file_path)
-                plugin_print(t("download.file_updated", str(plugin_file_path.name)))
             except Exception as e:
                 plugin_print(t("download.copy_error", str(e)), "ERROR")
-                # 回滚
-                try:
-                    if backup_path.exists() and not plugin_file_path.exists():
-                        shutil.copy2(backup_path, plugin_file_path)
-                        plugin_print(t("download.rollback_done"))
-                except Exception as e2:
-                    plugin_print(t("download.rollback_failed", str(e2)), "ERROR")
                 return
-        else:
-            # 新插件，直接复制
-            dest = Path("./plugins") / new_file.name
-            shutil.copy2(new_file, dest)
-            plugin_print(t("download.file_updated", str(dest.name)))
+
+        # 放入新文件（保留原始文件名）
+        shutil.copy2(new_file, dest)
+        plugin_print(t("download.file_updated", str(dest.name)))
 
         # 重载
         self._reload_after_update(plugin_name_str, version_str)
