@@ -1140,34 +1140,17 @@ class EasyCheckUpdatePlugin(Plugin):
         plugin_file_path = self._find_plugin_file_path(plugin_name_str)
         dest = Path("./plugins") / new_file.name
 
+        # 删除旧文件
         if plugin_file_path and plugin_file_path.exists():
-            # 备份旧文件
-            backup_path = plugin_file_path.with_suffix(plugin_file_path.suffix + ".bak")
-            try:
-                shutil.copy2(plugin_file_path, backup_path)
-                plugin_print(t("download.backed_up", str(backup_path)))
-            except Exception as e:
-                plugin_print(t("download.backup_failed", str(e)), "WARNING")
-
-            # 删除旧文件，放入新文件（保留原始文件名）
             try:
                 plugin_file_path.unlink()
-                shutil.copy2(new_file, dest)
-                plugin_print(t("download.file_updated", str(dest.name)))
             except Exception as e:
                 plugin_print(t("download.copy_error", str(e)), "ERROR")
-                # 回滚
-                try:
-                    if backup_path.exists() and not plugin_file_path.exists():
-                        shutil.copy2(backup_path, plugin_file_path)
-                        plugin_print(t("download.rollback_done"))
-                except Exception as e2:
-                    plugin_print(t("download.rollback_failed", str(e2)), "ERROR")
                 return
-        else:
-            # 新插件，直接复制
-            shutil.copy2(new_file, dest)
-            plugin_print(t("download.file_updated", str(dest.name)))
+
+        # 放入新文件（保留原始文件名）
+        shutil.copy2(new_file, dest)
+        plugin_print(t("download.file_updated", str(dest.name)))
 
         # 重载
         self._reload_after_update(plugin_name_str, version_str)
