@@ -19,7 +19,7 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 / A plugin update checker based on EndStone."
-plugin_version = "0.2.0-beta.7"
+plugin_version = "0.2.0-beta.8"
 plugin_author = ["梦涵LOVE"]
 plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
@@ -203,8 +203,8 @@ I18N_DATA = {
         # ── 命令 / 帮助 ──
         "command.desc": "检查插件更新",
         "command.no_permission": "你没有权限使用此命令",
-        "command.help": "命令帮助:\n/ecu - 显示此帮助信息\n/ecu all - 检查所有插件的更新\n/ecu reload - 重载插件\n/ecu <插件名称> - 检查指定插件的更新\n/ecu update <插件名称> - 更新指定插件\n/ecu info <插件名称> - 查看版本列表",
-        "command.update_usage": "用法: /ecu update <插件名称>",
+        "command.help": "命令帮助:\n/ecu - 显示此帮助信息\n/ecu all - 检查所有插件的更新\n/ecu reload - 重载插件\n/ecu check <插件名称> - 检查指定插件的更新\n/ecu update <插件名称> [版本号] - 更新指定插件\n/ecu info <插件名称> [版本号] - 查看版本列表或指定版本详情",
+        "command.update_usage": "用法: /ecu update <插件名称> [版本号]",
         "command.info_usage": "用法: /ecu info <插件名称>",
         "command.checking_update": "正在检查并更新插件 {0}，请查看控制台获取详细信息",
         "command.plugin_not_found": "未找到插件: {0}",
@@ -318,9 +318,9 @@ I18N_DATA = {
         # ── Command / Help ──
         "command.desc": "Check plugin updates",
         "command.no_permission": "You do not have permission to use this command",
-        "command.help": "Command Help:\n/ecu - Show this help\n/ecu all - Check all plugins for updates\n/ecu reload - Reload plugin\n/ecu <plugin> - Check specified plugin for updates\n/ecu update <plugin> - Update specified plugin\n/ecu info <plugin> - View version list",
-        "command.update_usage": "Usage: /ecu update <plugin>",
-        "command.info_usage": "Usage: /ecu info <plugin>",
+        "command.help": "Command Help:\n/ecu - Show this help\n/ecu all - Check all plugins for updates\n/ecu reload - Reload plugin\n/ecu check <plugin> - Check specified plugin for updates\n/ecu update <plugin> [version] - Update specified plugin\n/ecu info <plugin> [version] - View version list or details",
+        "command.update_usage": "Usage: /ecu update <plugin> [version]",
+        "command.info_usage": "Usage: /ecu info <plugin> [version]",
         "command.checking_update": "Checking and updating plugin {0}, check console for details",
         "command.plugin_not_found": "Plugin not found: {0}",
         "command.querying_detail": "Querying details for {0} v{1}, check console",
@@ -558,6 +558,13 @@ def find_version_key(versions, requested_version):
     return None
 
 
+def normalize_version(ver: str):
+    """去掉版本号前可选的 v/V 前缀"""
+    if ver and ver.lower().startswith('v'):
+        return ver[1:]
+    return ver
+
+
 def print_version_list(plugin_name_str, versions, current_version, recommended_ver):
     """打印插件的版本列表（所有用户均可看到全部版本）"""
     plugin_print(t("update.version_list", plugin_name_str))
@@ -592,8 +599,9 @@ class EasyCheckUpdatePlugin(Plugin):
                 "/easycheckupdate",
                 "/easycheckupdate all",
                 "/easycheckupdate reload",
-                "/easycheckupdate (update|info)<action: str> <plugin_name: str>",
-                "/easycheckupdate <plugin_name: str>",
+                "/easycheckupdate check <plugin_name: str>",
+                "/easycheckupdate info <plugin_name: str> [version: str]",
+                "/easycheckupdate update <plugin_name: str> [version: str]",
             ],
             "permissions": ["easycheckupdate.command.use"],
             "aliases": ["ecu"],
@@ -950,7 +958,7 @@ class EasyCheckUpdatePlugin(Plugin):
                     return True
 
                 if target_version:
-                    # 指定目标版本
+                    # 指定目标版本（强制安装，跳过版本比较）
                     target_key = find_version_key(versions, target_version)
                     if not target_key:
                         plugin_print(t("update.version_not_found", plugin_name_str, target_version), "WARNING")
@@ -960,11 +968,11 @@ class EasyCheckUpdatePlugin(Plugin):
                         plugin_print(t("update.format_error", plugin_name_str), "WARNING")
                         return True
                     latest_version = target_key
+                    explicit_target = True
                     download_url = target_info.get("download_url", "")
                     update_content = target_info.get("update_content", t("general.no_content"))
                     author = target_info.get("author", t("general.unknown_author"))
                     update_time = target_info.get("update_time", t("general.unknown_time"))
-                    explicit_target = True
                 else:
                     # 智能选择最佳版本
                     user_is_prerelease_flag = is_prerelease(current_version)
@@ -1039,12 +1047,12 @@ class EasyCheckUpdatePlugin(Plugin):
         if isinstance(info, dict):
             tag = t("general.pre_release" if is_prerelease(key) else "general.stable")
             plugin_print(f"  v{key} ({tag})")
-            plugin_print(f"  {t('update.author')}: {info.get('author', t('general.unknown_author'))}")
-            plugin_print(f"  {t('update.time')}: {info.get('update_time', t('general.unknown_time'))}")
-            plugin_print(f"  {t('update.content')}: {info.get('update_content', t('general.no_content'))}")
+            plugin_print("  " + t("update.author", info.get("author", t("general.unknown_author"))))
+            plugin_print("  " + t("update.time", info.get("update_time", t("general.unknown_time"))))
+            plugin_print("  " + t("update.content", info.get("update_content", t("general.no_content"))))
             download_url = info.get("download_url", "")
             if download_url:
-                plugin_print(f"  {t('update.download_url')}: {download_url}")
+                plugin_print("  " + t("update.download_url", download_url))
 
     # ── 下载 / 安装 ──
 
@@ -1321,8 +1329,14 @@ class EasyCheckUpdatePlugin(Plugin):
                 if len(args) < 2:
                     sender.send_message(f"§c{t('command.update_usage')}")
                     return True
-                plugin_name_str = args[1]
-                target_ver = args[2] if len(args) >= 3 else None
+                # 兼容 EndStone 两种解析行为：版本号可能在 args[2] 也可能合并在 args[1] 中
+                if len(args) > 2:
+                    plugin_name_str = args[1]
+                    target_ver = normalize_version(args[2])
+                else:
+                    parts = args[1].split(' ', 1)
+                    plugin_name_str = parts[0]
+                    target_ver = normalize_version(parts[1]) if len(parts) > 1 else None
 
                 plugin_obj = None
                 for p in self.server.plugin_manager.plugins:
@@ -1342,8 +1356,14 @@ class EasyCheckUpdatePlugin(Plugin):
                 if len(args) < 2:
                     sender.send_message(f"§c{t('command.info_usage')}")
                     return True
-                plugin_name_str = args[1]
-                target_ver = args[2] if len(args) >= 3 else None
+                # 兼容 EndStone 两种解析行为：版本号可能在 args[2] 也可能合并在 args[1] 中
+                if len(args) > 2:
+                    plugin_name_str = args[1]
+                    target_ver = normalize_version(args[2])
+                else:
+                    parts = args[1].split(' ', 1)
+                    plugin_name_str = parts[0]
+                    target_ver = normalize_version(parts[1]) if len(parts) > 1 else None
 
                 plugin_obj = self.get_plugin_update_info(plugin_name_str)
                 if not plugin_obj:
@@ -1412,18 +1432,25 @@ class EasyCheckUpdatePlugin(Plugin):
                     print_version_list(plugin_name_str, versions, pversion, recommended_ver)
                 return True
 
-            # /ecu <plugin> → 检查指定插件
-            plugin_name_str = args[0]
-            plugin_obj = None
-            for p in self.server.plugin_manager.plugins:
-                if p.name == plugin_name_str:
-                    plugin_obj = p
-                    break
-            if plugin_obj:
-                self.check_plugin_update(plugin_name_str, plugin_obj.version)
-                sender.send_message(f"§a{t('command.checking_plugin', plugin_name_str)}")
-            else:
-                sender.send_message(f"§c{t('command.plugin_not_found', plugin_name_str)}")
-            return True
+            if sub == "check":
+                # /ecu check <plugin>
+                if len(args) < 2:
+                    sender.send_message(f"§c用法: /ecu check <插件名称>")
+                    return True
+                plugin_name_str = args[1]
+                plugin_obj = None
+                for p in self.server.plugin_manager.plugins:
+                    if p.name == plugin_name_str:
+                        plugin_obj = p
+                        break
+                if plugin_obj:
+                    self.check_plugin_update(plugin_name_str, plugin_obj.version)
+                    sender.send_message(f"§a{t('command.checking_plugin', plugin_name_str)}")
+                else:
+                    sender.send_message(f"§c{t('command.plugin_not_found', plugin_name_str)}")
+                return True
+
+            # 未知子命令
+            sender.send_message(f"§c未知命令: /ecu {sub}")
 
         return False
