@@ -29,8 +29,9 @@ if not bstats_logger.handlers:
 class BStatsConfig:
     """bStats 配置管理"""
 
-    def __init__(self, config_file: Path):
+    def __init__(self, config_file: Path, translate=None):
         self.config_file = config_file
+        self.translate = translate or (lambda key, *args: key)
         self.enabled = True
         self.server_uuid = str(uuid.uuid4())
         self.log_errors_enabled = False
@@ -51,7 +52,8 @@ class BStatsConfig:
                     self.log_sent_data_enabled = config.get('log-sent-data-enabled', False)
                     self.log_response_status_text_enabled = config.get('log-response-status-text-enabled', False)
                 # bstats_logger.info(f"配置文件加载成功")
-                bstats_logger.info(f"遥测状态: {'已启用' if self.enabled else '已禁用'}")
+                status_text = self.translate("general.enabled") if self.enabled else self.translate("general.disabled")
+                bstats_logger.info(self.translate("bstats.status", status_text))
             else:
                 # bstats_logger.info(f"配置文件不存在,将创建新文件")
                 self._save_config()
@@ -115,18 +117,20 @@ class DrilldownPie:
 class BStats:
     """bStats 遥测主类"""
 
-    def __init__(self, plugin, service_id: int):
+    def __init__(self, plugin, service_id: int, translate=None):
         """
         初始化 bStats
 
         Args:
             plugin: 插件实例
             service_id: bStats 服务ID
+            translate: 可选的翻译回调函数，签名为 translate(key, *args) -> str
         """
         self.plugin = plugin
         self.service_id = service_id
         self.plugin_name = getattr(plugin, 'name', 'Unknown')
         self.plugin_version = getattr(plugin, 'version', 'Unknown')
+        self.translate = translate or (lambda key, *args: key)
 
         # 初始化配置
         try:
@@ -137,7 +141,7 @@ class BStats:
 
             bstats_folder = Path(data_folder) / "bstats"
             # bstats_logger.info(f"配置文件路径: {bstats_folder / 'config.json'}")
-            self.config = BStatsConfig(bstats_folder / "config.json")
+            self.config = BStatsConfig(bstats_folder / "config.json", translate=self.translate)
         except Exception as e:
             bstats_logger.error(f"初始化配置失败: {e}")
             import traceback
@@ -246,7 +250,7 @@ class BStats:
     def _submit_data(self):
         """提交数据到 bStats 服务器"""
         if not self.config.enabled:
-            bstats_logger.info("遥测模块已禁用，跳过上报。")
+            bstats_logger.info(self.translate("bstats.disabled_skip"))
             return
 
         try:
@@ -256,7 +260,7 @@ class BStats:
                 bstats_logger.info(f"准备上报数据包内容:")
                 bstats_logger.info(json.dumps(payload, indent=2))
 
-            bstats_logger.info(f"正在提交遥测数据到 bStats 服务器...")
+            bstats_logger.info(self.translate("bstats.submitting"))
             response = requests.post(
                 self.base_url,
                 json=payload,
@@ -265,16 +269,16 @@ class BStats:
             )
 
             if response.status_code == 200:
-                bstats_logger.info("遥测数据上报成功！")
+                bstats_logger.info(self.translate("bstats.submit_success"))
                 if self.config.log_sent_data_enabled:
                     bstats_logger.info(f"响应内容: {response.text if response.text else '(空)'}")
             else:
-                bstats_logger.warning(f"上报失败，状态码: {response.status_code}")
+                bstats_logger.warning(self.translate("bstats.submit_failed", str(response.status_code)))
                 if self.config.log_sent_data_enabled:
                     bstats_logger.warning(f"返回结果: {response.text if response.text else '(空)'}")
 
         except Exception as e:
-            bstats_logger.error(f"网络请求异常: {e}")
+            bstats_logger.error(self.translate("bstats.network_error", str(e)))
             if self.config.log_errors_enabled:
                 import traceback
                 bstats_logger.error(f"异常堆栈: {traceback.format_exc()}")
@@ -291,7 +295,7 @@ class BStats:
             try:
                 self._submit_data()
             except Exception as e:
-                bstats_logger.error(f"提交数据时发生错误: {e}")
+                bstats_logger.error(self.translate("bstats.submit_error", str(e)))
                 if self.config.log_errors_enabled:
                     import traceback
                     bstats_logger.error(f"异常堆栈: {traceback.format_exc()}")
@@ -312,12 +316,14 @@ class BStats:
         self._submit_thread.start()
 
         # 输出启动日志
-        bstats_logger.info(f"{self.plugin_name} 遥测模块已启动。")
-        bstats_logger.info(f"首次数据将在 30 秒后发送,之后每 30 分钟发送一次。")
+        bstats_logger.info(self.translate("bstats.module_started", self.plugin_name))
+        bstats_logger.info(self.translate("bstats.first_submit_info"))
         if self.config.log_sent_data_enabled:
-            bstats_logger.info(f"插件ID: {self.service_id}, 插件版本: {self.plugin_version}")
-            bstats_logger.info(f"遥测状态: {'已启用' if self.config.enabled else '已禁用'}")
-            bstats_logger.info(f"调试模式: {'已启用' if self.config.log_sent_data_enabled else '已禁用'}")
+            bstats_logger.info(self.translate("bstats.plugin_info", str(self.service_id), self.plugin_version))
+            status_text = self.translate("general.enabled") if self.config.enabled else self.translate("general.disabled")
+            bstats_logger.info(self.translate("bstats.status", status_text))
+            debug_text = self.translate("general.enabled") if self.config.log_sent_data_enabled else self.translate("general.disabled")
+            bstats_logger.info(self.translate("bstats.debug_mode", debug_text))
 
     def shutdown(self):
         """关闭 bStats 遥测"""
@@ -326,4 +332,4 @@ class BStats:
             self._submit_thread.join(timeout=5)
 
         if self.config.log_sent_data_enabled:
-            bstats_logger.info(f"{self.plugin_name} 遥测模块已关闭。")
+            bstats_logger.info(self.translate("bstats.module_stopped", self.plugin_name))
