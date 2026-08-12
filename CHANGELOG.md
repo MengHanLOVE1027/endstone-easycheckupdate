@@ -4,6 +4,17 @@
 
 ---
 
+## [0.2.3] - 2026-08-12
+
+### 🌍 国际化
+- 补全缺失的 i18n 翻译键：插件生命周期、BStats 遥测模块、命令消息等
+- 修复 `easycheckupdate_plugin.py` 中 12 处硬编码中文字符串，全部接入 `t()` 翻译系统
+- 修复 `bstats.py` 中 12 处硬编码中文字符串，BStats 类新增 `translate` 回调参数
+- 补全 `command.info_usage` 的 zh_CN 版本缺失的 `[版本号]` 参数
+- 新增 `config.unknown_language` 语言回退警告的 i18n 支持
+
+---
+
 ## [0.2.2] - 2026-08-11
 
 ### 🐛 修复

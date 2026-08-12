@@ -19,7 +19,7 @@ from .bstats import BStats, SimplePie
 plugin_name = "EasyCheckUpdate"
 plugin_name_smallest = "easycheckupdate"
 plugin_description = "一个基于 EndStone 的插件更新检查工具 | A plugin update checker based on EndStone."
-plugin_version = "0.2.2"
+plugin_version = "0.2.3"
 plugin_author = ["梦涵LOVE"]
 plugin_website = "https://www.minebbs.com/resources/easycheckupdate-ecu-endstone.15500/"
 plugin_github_link = "https://github.com/MengHanLOVE1027/endstone-easycheckupdate"
@@ -115,6 +115,14 @@ I18N_DATA = {
         "general.enabled": "已启用",
         "general.disabled": "已禁用",
 
+        # ── 插件生命周期 ──
+        "plugin.loading": "{0} 正在加载...",
+        "plugin.loaded": "{0} 已加载!",
+        "plugin.enabling": "{0} 正在启用...",
+        "plugin.enabled": "{0} 已启用!",
+        "plugin.disabling": "{0} 正在禁用...",
+        "plugin.disabled": "{0} 已禁用!",
+
         # ── 配置 ──
         "config.created": "已创建默认配置文件",
         "config.backed_up": "配置已备份到 {0}",
@@ -130,10 +138,13 @@ I18N_DATA = {
         "config.not_exist": "配置文件不存在，使用默认配置",
         "config.reload_success": "重载成功",
         "config.reload_failed": "重载失败: {0}",
+        "config.unknown_language": "未知语言 \"{0}\"，将回退到 zh_CN",
         "config.file_path": "配置文件: {0}",
 
         # ── 更新检查 ──
         "update.auto_check_delay": "将在 {0} 秒后自动检查所有插件的更新...",
+        "update.already_checking": "已有检查任务正在运行，跳过本次检查",
+        "update.check_too_soon": "距离上次检查不足 {0} 秒（还需 {1} 秒），跳过本次检查",
         "update.checking_all": "正在检查所有插件的更新...",
         "update.checking": "正在检查插件 {0} 的更新...",
         "update.fetching": "正在从 {0} 获取插件 {1} 的更新信息...",
@@ -206,17 +217,31 @@ I18N_DATA = {
         "command.no_permission": "你没有权限使用此命令",
         "command.help": "命令帮助:\n/ecu - 显示此帮助信息\n/ecu all - 检查所有插件的更新\n/ecu reload - 重载插件\n/ecu check <插件名称> - 检查指定插件的更新\n/ecu update <插件名称> [版本号] - 更新指定插件\n/ecu info <插件名称> [版本号] - 查看版本列表或指定版本详情",
         "command.update_usage": "用法: /ecu update <插件名称> [版本号]",
-        "command.info_usage": "用法: /ecu info <插件名称>",
+        "command.info_usage": "用法: /ecu info <插件名称> [版本号]",
         "command.checking_update": "正在检查并更新插件 {0}，请查看控制台获取详细信息",
         "command.plugin_not_found": "未找到插件: {0}",
         "command.querying_detail": "正在查询插件 {0} 版本 v{1} 的详细信息，请查看控制台",
         "command.querying_list": "正在查询插件 {0} 的版本列表，请查看控制台",
         "command.checking_all": "正在检查所有插件的更新，请查看控制台获取详细信息",
         "command.checking_plugin": "正在检查插件 {0} 的更新，请查看控制台获取详细信息",
+        "command.check_usage": "用法: /ecu check <插件名称>",
+        "command.unknown_subcommand": "未知命令: /ecu {0}",
 
         # ── BStats / 其他 ──
         "bstats.init_failed": "BStats初始化失败: {0}",
         "bstats.started": "{0}遥测模块已启动。",
+        "bstats.status": "遥测状态: {0}",
+        "bstats.disabled_skip": "遥测模块已禁用，跳过上报。",
+        "bstats.submitting": "正在提交遥测数据到 bStats 服务器...",
+        "bstats.submit_success": "遥测数据上报成功！",
+        "bstats.submit_failed": "上报失败，状态码: {0}",
+        "bstats.network_error": "网络请求异常: {0}",
+        "bstats.submit_error": "提交数据时发生错误: {0}",
+        "bstats.module_started": "{0} 遥测模块已启动。",
+        "bstats.first_submit_info": "首次数据将在 30 秒后发送，之后每 30 分钟发送一次。",
+        "bstats.plugin_info": "插件ID: {0}, 插件版本: {1}",
+        "bstats.debug_mode": "调试模式: {0}",
+        "bstats.module_stopped": "{0} 遥测模块已关闭。",
     },
     "en_US": {
         # ── Logo / Startup ──
@@ -230,6 +255,14 @@ I18N_DATA = {
         "logo.bstats_status": "BStats Status: {0}",
         "general.enabled": "Enabled",
         "general.disabled": "Disabled",
+
+        # ── Plugin Lifecycle ──
+        "plugin.loading": "{0} is loading...",
+        "plugin.loaded": "{0} loaded!",
+        "plugin.enabling": "{0} is enabling...",
+        "plugin.enabled": "{0} enabled!",
+        "plugin.disabling": "{0} is disabling...",
+        "plugin.disabled": "{0} disabled!",
 
         # ── Config ──
         "config.created": "Default configuration file created",
@@ -246,10 +279,13 @@ I18N_DATA = {
         "config.not_exist": "Configuration file does not exist, using defaults",
         "config.reload_success": "Reload successful",
         "config.reload_failed": "Reload failed: {0}",
+        "config.unknown_language": "Unknown language \"{0}\", falling back to zh_CN",
         "config.file_path": "Config file: {0}",
 
         # ── Update Check ──
         "update.auto_check_delay": "Will auto-check all plugins for updates in {0} seconds...",
+        "update.already_checking": "Another check is already running, skipping this check",
+        "update.check_too_soon": "Less than {0} seconds since last check ({1} seconds remaining), skipping this check",
         "update.checking_all": "Checking all plugins for updates...",
         "update.checking": "Checking plugin {0} for updates...",
         "update.fetching": "Fetching update info for {1} from {0}...",
@@ -329,10 +365,24 @@ I18N_DATA = {
         "command.querying_list": "Querying version list for {0}, check console",
         "command.checking_all": "Checking all plugins for updates, check console for details",
         "command.checking_plugin": "Checking {0} for updates, check console for details",
+        "command.check_usage": "Usage: /ecu check <plugin>",
+        "command.unknown_subcommand": "Unknown command: /ecu {0}",
 
         # ── BStats / Misc ──
         "bstats.init_failed": "BStats initialization failed: {0}",
         "bstats.started": "{0} telemetry module started.",
+        "bstats.status": "Telemetry Status: {0}",
+        "bstats.disabled_skip": "Telemetry module disabled, skipping report.",
+        "bstats.submitting": "Submitting telemetry data to bStats server...",
+        "bstats.submit_success": "Telemetry data submitted successfully!",
+        "bstats.submit_failed": "Submission failed, status code: {0}",
+        "bstats.network_error": "Network request error: {0}",
+        "bstats.submit_error": "Error while submitting data: {0}",
+        "bstats.module_started": "{0} telemetry module started.",
+        "bstats.first_submit_info": "First data will be sent in 30 seconds, then every 30 minutes.",
+        "bstats.plugin_info": "Plugin ID: {0}, Plugin Version: {1}",
+        "bstats.debug_mode": "Debug mode: {0}",
+        "bstats.module_stopped": "{0} telemetry module stopped.",
     }
 }
 
@@ -611,7 +661,7 @@ class EasyCheckUpdatePlugin(Plugin):
     # NOTE: 注册命令
     commands = {
         "easycheckupdate": {
-            "description": "检查插件更新 / Check plugin updates",
+            "description": t("command.desc"),
             "usages": [
                 "/easycheckupdate",
                 "/easycheckupdate all",
@@ -776,7 +826,7 @@ class EasyCheckUpdatePlugin(Plugin):
 
     def on_load(self):
         """插件加载时调用"""
-        plugin_print(f"{plugin_full_name} 正在加载...")
+        plugin_print(t("plugin.loading", plugin_full_name))
 
         # 加载配置
         self.load_config()
@@ -785,7 +835,7 @@ class EasyCheckUpdatePlugin(Plugin):
         lang = self.plugin_config.get("language", "zh_CN")
         apply_configured_language(lang)
         if lang not in I18N_DATA:
-            plugin_print(f'Unknown language "{lang}", falling back to zh_CN', "WARNING")
+            plugin_print(t("config.unknown_language", lang), "WARNING")
 
         # Logo
         print(RandomColor("███████╗ █████╗ ███████╗██╗   ██╗██╗   ██╗██████╗ ██████╗  █████╗ ████████╗███████╗"))
@@ -807,29 +857,29 @@ class EasyCheckUpdatePlugin(Plugin):
         plugin_print(t("logo.bstats_status", t("general.enabled") if bstats_enabled else t("general.disabled")))
         plugin_print("=" * 80, "INFO")
 
-        plugin_print(f"{plugin_full_name} 已加载!")
+        plugin_print(t("plugin.loaded", plugin_full_name))
 
     def on_enable(self):
         """插件启用时调用"""
-        plugin_print(f"{plugin_full_name} 正在启用...")
+        plugin_print(t("plugin.enabling", plugin_full_name))
 
         # 启用 bStats
         try:
-            metrics = BStats(self, 29349)
+            metrics = BStats(self, 29349, translate=t)
             metrics.add_custom_chart(SimplePie("check_interval", lambda: str(self.check_interval)))
             metrics.start()
         except Exception as e:
             plugin_print(t("bstats.init_failed", str(e)), "ERROR")
 
-        plugin_print(f"{plugin_full_name} 已启用!")
+        plugin_print(t("plugin.enabled", plugin_full_name))
 
         # 定时检查更新
         self.schedule_update_checks()
 
     def on_disable(self):
         """插件禁用时调用"""
-        plugin_print(f"{plugin_full_name} 正在禁用...")
-        plugin_print(f"{plugin_full_name} 已禁用!")
+        plugin_print(t("plugin.disabling", plugin_full_name))
+        plugin_print(t("plugin.disabled", plugin_full_name))
 
     # ── 定时调度 ──
 
@@ -874,7 +924,7 @@ class EasyCheckUpdatePlugin(Plugin):
     def check_all_plugins_update(self, force=False):
         """检查所有插件的更新。force=True 时忽略间隔限制"""
         if self._checking:
-            plugin_print("已有检查任务正在运行，跳过本次检查")
+            plugin_print(t("update.already_checking"))
             return
         self._checking = True
 
@@ -884,7 +934,7 @@ class EasyCheckUpdatePlugin(Plugin):
             current_time = time.time()
             if not force and current_time - self.last_check_time < self.check_interval:
                 remaining = int(self.check_interval - (current_time - self.last_check_time))
-                plugin_print(f"距离上次检查不足 {self.check_interval} 秒（还需 {remaining} 秒），跳过本次检查")
+                plugin_print(t("update.check_too_soon", str(self.check_interval), str(remaining)))
                 return
 
             self.last_check_time = current_time
@@ -1445,7 +1495,7 @@ class EasyCheckUpdatePlugin(Plugin):
             if sub == "check":
                 # /ecu check <plugin>
                 if len(args) < 2:
-                    sender.send_message(f"§c用法: /ecu check <插件名称>")
+                    sender.send_message(f"§c{t('command.check_usage')}")
                     return True
                 plugin_name_str = args[1]
                 plugin_obj = None
@@ -1461,6 +1511,6 @@ class EasyCheckUpdatePlugin(Plugin):
                 return True
 
             # 未知子命令
-            sender.send_message(f"§c未知命令: /ecu {sub}")
+            sender.send_message(f"§c{t('command.unknown_subcommand', sub)}")
 
         return False
